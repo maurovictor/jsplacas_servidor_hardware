@@ -14,11 +14,24 @@ int clockPin = 14;
 int dataPin = 5;
 
 
+
 ESP8266WebServer server(80);
+
 
 
 void handleRoot() {
   server.send(200, "text/plain", "hello from esp8266!");
+}
+
+
+
+void VR1() {
+  server.send(200, "text/plain", "VR1 funcionando");
+  digitalWrite(latchPin, LOW);
+  shiftOut(dataPin, clockPin, MSBFIRST, 0b11001101); 
+  shiftOut(dataPin, clockPin, MSBFIRST, 0b11111111); 
+  digitalWrite(latchPin, HIGH); 
+  digitalWrite(latchPin, LOW);
 }
 
 void handleNotFound(){
@@ -62,89 +75,26 @@ void setup(void){
   if (MDNS.begin("esp8266")) {
     Serial.println("MDNS responder started");
   }
-
   server.on("/", handleRoot);
+  int a=0b11010111;
+  server.on("/VR1", VR1);
+  server.on("/2byte0", []{
+    server.send(200, "text/plain", "apaga tudo");
+    digitalWrite(latchPin, LOW);
+    shiftOut(dataPin, clockPin, MSBFIRST, 0b00000000); 
+    shiftOut(dataPin, clockPin, MSBFIRST, 0b00000000); 
+    digitalWrite(latchPin, HIGH); 
+    digitalWrite(latchPin, LOW);
+  });
+  server.on("/2byte1",[]{
+    server.send(200, "text/plain", "liga tudo");
+    digitalWrite(latchPin, LOW);
+    shiftOut(dataPin, clockPin, MSBFIRST, 0b11001101); 
+    shiftOut(dataPin, clockPin, MSBFIRST, 0b11111111); 
+    digitalWrite(latchPin, HIGH); 
+    digitalWrite(latchPin, LOW);
 
-  server.on("/inline", [](){
-    server.send(200, "text/plain", "this works as well");
   });
-
-  server.on("/pisca_led", []{
-    server.send(200, "text/plain", "Leds Piscando");
-    for (int i=0; i<3; i++){
-      for (int numberToDisplay = 1; numberToDisplay < 8; numberToDisplay++) {
-        // take the latchPin low so 
-        // the LEDs don't change while you're sending in bits:
-        digitalWrite(latchPin, LOW);
-        // shift out the bits:
-        shiftOut(dataPin, clockPin, LSBFIRST, pow(2,numberToDisplay));  
-    
-        //take the latch pin high so the LEDs will light up:
-        digitalWrite(latchPin, HIGH);
-        // pause before next value:
-        delay(20);
-      }
-      for (int numberToDisplay = 7; numberToDisplay > 0; numberToDisplay--) {
-        // take the latchPin low so 
-        // the LEDs don't change while you're sending in bits:
-        digitalWrite(latchPin, LOW);
-        // shift out the bits:
-        shiftOut(dataPin, clockPin, LSBFIRST, pow(2,numberToDisplay));  
-    
-        //take the latch pin high so the LEDs will light up:
-        digitalWrite(latchPin, HIGH);
-        // pause before next value:
-        delay(20);
-      }
-    }
-  });
-
-  server.on("/37", []{
-    server.send(200, "text/plain", "Número 37");
-    digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, LSBFIRST, 37); 
-    digitalWrite(latchPin, HIGH);
-    digitalWrite(latchPin, LOW);
-  });
-
-  server.on("/todos", []{
-    server.send(200, "text/plain", "Todos acesos");
-    digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, LSBFIRST, 255); 
-    digitalWrite(latchPin, HIGH);
-    digitalWrite(latchPin, LOW);
-  });
-  server.on("/1", []{
-    server.send(200, "text/plain", "numero 1");
-    digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, LSBFIRST, 1); 
-    digitalWrite(latchPin, HIGH);
-    digitalWrite(latchPin, LOW);
-  });
-  server.on("/128", []{
-    server.send(200, "text/plain", "numero 128");
-    digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, LSBFIRST, 128); 
-    digitalWrite(latchPin, HIGH);
-    digitalWrite(latchPin, LOW);
-  });
-
-  server.on("/1024", []{
-    server.send(200, "text/plain", "numero 1024");
-    digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, LSBFIRST, 1024); 
-    digitalWrite(latchPin, HIGH);
-    digitalWrite(latchPin, LOW);
-  });
-
-  server.on("/512", []{
-    server.send(200, "text/plain", "numero 512");
-    digitalWrite(latchPin, LOW);
-    shiftOut(dataPin, clockPin, LSBFIRST, 512); 
-    digitalWrite(latchPin, HIGH);
-    digitalWrite(latchPin, LOW);
-  });
-  
   server.onNotFound(handleNotFound);
 
   server.begin();
@@ -154,3 +104,5 @@ void setup(void){
 void loop(void){
   server.handleClient();
 }
+
+
